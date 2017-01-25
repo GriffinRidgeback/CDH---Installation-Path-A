@@ -7,3 +7,15 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
 4. Security group creation should be done before the instance configuration.  See the setup I have for the default group which allows the inbound ports specified for the Cloudera installation.
 
 ![Security Group Configuration](Security Group Configuration.png "Default Security Group")
+
+5. Go to the EC2 Dashboard and select __Launch Instance__. 
+6. Choose __Ubuntu Server 14.04 LTS (HVM), SSD Volume Type - ami-5ac2cd4d__. 
+7. For __Choose an Instance Type__, pick something like __m3.xlarge__, based on my experience (found an hs_err_pid file in the temp directory indicating that memory had been exhausted) and the confirmation by someone else:
+
+  _I have chosen ”m3.xlarge (4 vCPUs, 2.5 GHz, Intel Xeon E5-2670v2, 15 GiB memory, 2 x 40 GiB Storage Capacity)” for my instance type which is NOT FREE of cost. Because when I have chosen low configure free tier eligible instance type, the server silently going down during installation._
+8. For __Configure Instance Details__, create 4 instances; leave all other fields at their default values.
+9. On the __Add Storage__ page, assign 30 GiB as the value.
+10. Leave the __Add Tags__ blank; those are assigned later.
+11. On __Configure Security Group__, choose _Select an_ _**existing**_ _security group_ and select the one created in an earlier step.
+12. When you click the __Launch Instance__ button, you are prompted to launch the instance with a key pair, as shown below:
+![Security Group Configuration](Security Group Configuration.png "Default Security Group")
