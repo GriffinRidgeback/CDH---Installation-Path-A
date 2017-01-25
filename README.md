@@ -59,3 +59,9 @@ sudo ./cloudera-manager-installer.bin
  ```
  
  23. Most of the install is straight-forward.  Use the license key provided by Cloudera for the Enterprise edition. In the __Specify hosts for your CDH cluster installation.__ section, I specified the private IPs.  Once the search completes, the __Currently Managed__ should contain No for each IP.  For __Provide SSH login credentials.__, use _ubuntu_ as the user and the _.pem_ file as the credentials when selecting __All hosts accept same private key__.  Supply the password for the _.pem_ file.
+
+# To run Spark
+
+```
+sudo -u spark spark-shell
+```
