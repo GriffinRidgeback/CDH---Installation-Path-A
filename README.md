@@ -30,3 +30,17 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
 19. Click the __NameNode__ and the __Connect__ button lights up.  Click that.
 
 ![Connect to Instance Dialog](Connect to Instance.png "Connect to Instance")
+
+20. scp notes:
+
+## Command
+```
+  scp -i ~/Downloads/ubuntu_1404.pem ./cloudera-manager-installer.bin ubuntu@ec2-54-88-19-45.compute-1.amazonaws.com:~
+```
+## Comments
+
+<pre>
+  1. The example Amazon gives is for an EC2 Instance.  I’m using Ubuntu, so the user is not ec2-user but ubuntu.  
+  2. This page gives a good explanation of the problem:  
+    http://stackoverflow.com/questions/17449023/transferring-a-file-to-an-amazon-ec2-instance-using-scp-always-gives-me-permissi
+</pre>
