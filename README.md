@@ -18,7 +18,9 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
 10. Leave the __Add Tags__ blank; those are assigned later.
 11. On __Configure Security Group__, choose _Select an_ _**existing**_ _security group_ and select the one created in an earlier step.
 12. When you click the __Launch Instance__ button, you are prompted to launch the instance with a key pair, as shown below:
+
 ![Launch Instance Dialog](Launch Instance.png "Select Key Pair")
+
 13. The instances are automatically assigned values for Public/Private DNS and Public/Private IP.
 14. In the __Name__ column, click the pencil icon to edit the name.  Create _NameNode_, _DataNode1-3_.
 15. On the left-hand side, click __Elastic IPs__.
@@ -26,3 +28,5 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
 17. Then click the __Allocate__ button to the far right; do that 3 more times.
 18. Then click __Actions__ and associate the IPs with running instances; do that 3 more times.  __Note:__ Order doesn't matter.
 19. Click the __NameNode__ and the __Connect__ button lights up.  Click that.
+
+![Connect to Instance Dialog](Connect to Instance.png "Connect to Instance")
