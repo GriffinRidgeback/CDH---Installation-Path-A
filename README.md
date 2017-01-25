@@ -6,4 +6,4 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
 3. Created a public/private key pair according to these instructions: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 4. Security group creation should be done before the instance configuration.  See the setup I have for the default group which allows the inbound ports specified for the Cloudera installation.
 
-<pre>
+![Security Group Configuration](Security Group Configuration.png "Default Security Group")
