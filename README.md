@@ -44,3 +44,18 @@ This repository contains the steps I took to install CDH on Amazon EC2 instances
   2. This page gives a good explanation of the problem:  
     http://stackoverflow.com/questions/17449023/transferring-a-file-to-an-amazon-ec2-instance-using-scp-always-gives-me-permissi
 </pre>
+
+21. From the terminal connected to your instance:
+
+```
+wget https://archive.cloudera.com/cm5/installer/latest/cloudera-manager-installer.bin
+chmod u+x cloudera-manager-installer.bin
+sudo ./cloudera-manager-installer.bin
+```
+ 22. Go to (as an example) and login to begin the install:
+ 
+ ```
+ http://ec2-34-198-87-247.compute-1.amazonaws.com:7180
+ ```
+ 
+ 23. Most of the install is straight-forward.  Use the license key provided by Cloudera for the Enterprise edition. In the __Specify hosts for your CDH cluster installation.__ section, I specified the private IPs.  Once the search completes, the __Currently Managed__ should contain No for each IP.  For __Provide SSH login credentials.__, use _ubuntu_ as the user and the _.pem_ file as the credentials when selecting __All hosts accept same private key__.  Supply the password for the _.pem_ file.
