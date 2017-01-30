@@ -20,3 +20,176 @@ spark-shell --master local[n|*] --driver-memory 2g
 Load the data from the local file system using fully-qualified paths; tilde replacement doesn't work.  Check the path specified as output from the RDD creation.
 
 _first_ is a good method to sanity check the load; _collect_ is good for bringing in small datasets as an array.
+
+The act of creating an RDD does not cause any distributed computation to take place on the cluster.  Rather, RDDs define logical data sets that are intermediate steps in a computation.  Distributed computation occurs upon invoking an _action_ on an RDD, such as __count__.
+
+# Scala anonymous functions
+
+```
+head.filter(x => !isHeader(x)).length
+```
+can be simplified to:
+```
+head.filter(!isHeader(_)).length
+```
+
+The underscore represents the argument to the anonymous function.
+
+# Tuples
+
+Used to create pairs, triples, and larger  collections of values of different types as a simple way to represent records.
+
+```
+val line = head(5)
+```
+
+is actually
+
+```
+val line = head.apply(5)
+```
+
+since array elements are accessed via the _apply_ function call and not special operators.
+
+# Implicits
+
+Converting the id variables and the matched boolean variable is pretty straightforward
+once we know about the appropriate toXYZ conversion functions. Unlike the
+contains method and split method that we worked with earlier, the toInt and
+toBoolean methods aren’t defined on Java’s String class. Instead, they are defined in
+a Scala class called StringOps that uses one of Scala’s more powerful (and arguably
+somewhat dangerous) features: implicit type conversion. Implicits work like this: if you
+call a method on a Scala object, and the Scala compiler does not see a definition for
+that method in the class definition for that object, the compiler will try to convert
+your object to an instance of a class that does have that method defined. In this case,
+the compiler will see that Java’s String class does not have a toInt method defined,
+but the StringOps class does, and that the StringOps class has a method that can
+convert an instance of the String class into an instance of the StringOps class. The
+compiler silently performs the conversion of our String object into a StringOps
+object, and then calls the toInt method on the new object.
+
+To convert
+them all at once, we can use the slice method on the Scala Array class to extract a
+contiguous subset of the array, and then use the map higher-order function to convert
+each element of the slice from a String to a Double:
+
+```
+val rawscores = pieces.slice(2, 11)
+rawscores.map(s => s.toDouble)
+rawscores.map(_.toDouble)
+```
+
+To handle values like ?, do this:
+```
+def toDouble(s: String) = {
+if ("?".equals(s)) Double.NaN else s.toDouble
+}
+val scores = rawscores.map(toDouble)
+```
+
+A simple technique is:
+```
+def parse(line: String) = {
+val pieces = line.split(',')
+val id1 = pieces(0).toInt
+val id2 = pieces(1).toInt
+val scores = pieces.slice(2, 11).map(toDouble)
+val matched = pieces(11).toBoolean
+(id1, id2, scores, matched)
+}
+val tup = parse(line)
+```
+
+We can retrieve the values of individual fields from our tuple by using the positional
+functions, starting from _1, or via the productElement method, which starts counting
+from 0. We can also get the size of any tuple via the productArity method:
+```
+tup._1
+tup.productElement(0)
+tup.productArity
+```
+
+Although it is very easy and convenient to create tuples in Scala, addressing all of the
+elements of a record by position instead of by a meaningful name can make our code
+difficult to understand. What we would really like is a way of creating a simple record
+type that would allow us to address our fields by name, instead of by position. Fortunately,
+Scala provides a convenient syntax for creating these records, called case
+classes. A case class is a simple type of immutable class that comes with implementations
+of all of the basic Java class methods,
+```
+case class MatchData(id1: Int, id2: Int,
+scores: Array[Double], matched: Boolean)
+```
+
+This changes the last line of the method to be:
+```
+MatchData(id1, id2, scores, matched)
+```
+
+Allows access of fields by name
+```
+md.matched
+md.id1
+```
+
+# Historgram
+to count how many of the MatchData
+records in parsed have a value of true or false for the matched field. Fortunately, the
+RDD[T] class defines an action called countByValue that performs this kind of computation
+very efficiently and returns the results to the client as a Map[T,Long]. Calling
+countByValue on a projection of the matched field from MatchData will execute a
+Spark job and return the results to the client:
+```
+val matchCounts = parsed.map(md => md.matched).countByValue()
+```
+Scala’s Map class does not have methods for sorting its contents on the keys or the values,
+but we can convert a Map into a Scala Seq type, which does provide support for
+sorting. Scala’s Seq is similar to Java’s List interface, in that it is an iterable collection
+that has a defined length and the ability to look up values by index:
+```
+val matchCountsSeq = matchCounts.toSeq
+matchCountsSeq.sortBy(_._1).foreach(println)
+matchCountsSeq.sortBy(_._2).foreach(println)
+matchCountsSeq.sortBy(_._1).reverse.foreach(println)
+```
+
+# Pair RDDs
+
+In addition to the RDD[Double] implicit actions, Spark supports implicit type conversion
+for the RDD[Tuple2[K, V]] type that provides methods for performing per-key
+aggregations like groupByKey and reduceByKey, as well as methods that enable joining
+multiple RDDs that have keys of the same type.
+
+# Summary stats
+```
+parsed.map(md => md.scores(0)).stats()
+```
+
+Unfortunately, the missing NaN values that we are using as placeholders in our arrays
+are tripping up Spark’s summary statistics. Even more unfortunate, Spark does not
+currently have a nice way of excluding and/or counting up the missing values for us,
+so we have to filter them out manually using the isNaN function from Java’s Double
+class:
+```
+import java.lang.Double.isNaN
+parsed.map(md => md.scores(0)).filter(!isNaN(_)).stats()
+StatCounter = (count: 5748125, mean: 0.7129, stdev: 0.3887, max: 1.0, min: 0.0)
+```
+
+If we were so inclined, we could get all of the statistics for the values in the scores
+array this way, using Scala’s Range construct to create a loop that would iterate
+through each index value and compute the statistics for the column, like so:
+```
+val stats = (0 until 9).map(i => {
+parsed.map(md => md.scores(i)).filter(!isNaN(_)).stats()
+})
+stats(1)
+...
+StatCounter = (count: 103698, mean: 0.9000, stdev: 0.2713, max:
+```
+
+# Creating Scala classes for Spark work
+Note that we’re
+marking this class as Serializable because we will be using instances of this class
+inside Spark RDDs, and our job will fail if Spark cannot serialize the data contained
+inside an RDD.
