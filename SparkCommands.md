@@ -68,6 +68,24 @@ convert an instance of the String class into an instance of the StringOps class.
 compiler silently performs the conversion of our String object into a StringOps
 object, and then calls the toInt method on the new object.
 
+# More on Scala Implicits
+
+Scala
+In Scala the conversion to RDDs with special functions (e.g., to expose numeric functions
+on an RDD[Double]) is handled automatically using implicit conversions. As
+mentioned in “Initializing a SparkContext” on page 17, we need to add import
+org.apache.spark.SparkContext._ for these conversions to work. You can see the
+implicit conversions listed in the SparkContext object’s ScalaDoc. These implicits
+turn an RDD into various wrapper classes, such as DoubleRDDFunctions (for RDDs
+of numeric data) and PairRDDFunctions (for key/value pairs), to expose additional
+functions such as mean() and variance().
+Implicits, while quite powerful, can sometimes be confusing. If you call a function
+like mean() on an RDD, you might look at the Scaladocs for the RDD class and notice
+there is no mean() function. The call manages to succeed because of implicit conversions
+between RDD[Double] and DoubleRDDFunctions. When searching for functions
+on your RDD in Scaladoc, make sure to look at functions that are available in these
+wrapper classes.
+
 To convert
 them all at once, we can use the slice method on the Scala Array class to extract a
 contiguous subset of the array, and then use the map higher-order function to convert
@@ -132,7 +150,7 @@ md.matched
 md.id1
 ```
 
-# Historgram
+# Histogram
 to count how many of the MatchData
 records in parsed have a value of true or false for the matched field. Fortunately, the
 RDD[T] class defines an action called countByValue that performs this kind of computation
@@ -193,3 +211,11 @@ Note that we’re
 marking this class as Serializable because we will be using instances of this class
 inside Spark RDDs, and our job will fail if Spark cannot serialize the data contained
 inside an RDD.
+
+# Underscore parameters
+
+_1 is a method name. Specifically tuples have a method named _1, which returns the first element of the tuple. So _._1 < _._1 means "call the _1 method on both arguments and check whether the first is less than the second".
+
+_._1 calls the method _1 on the wildcard parameter _, which gets the first element of a tuple. Thus, sortWith(_._1 < _._1) sorts the list of tuple by their first element.
+
+Additional information [here](https://gist.github.com/lenards/8aa8fb2e81c67971558c) and [here](http://docs.scala-lang.org/cheatsheets/)
