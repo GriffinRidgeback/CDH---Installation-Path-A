@@ -219,3 +219,64 @@ _1 is a method name. Specifically tuples have a method named _1, which returns t
 _._1 calls the method _1 on the wildcard parameter _, which gets the first element of a tuple. Thus, sortWith(_._1 < _._1) sorts the list of tuple by their first element.
 
 Additional information [here](https://gist.github.com/lenards/8aa8fb2e81c67971558c) and [here](http://docs.scala-lang.org/cheatsheets/)
+
+# Pair RDDs
+
+Example 4-2. Creating a pair RDD using the first word as the key in Scala
+```
+val pairs = lines.map(x => (x.split(" ")(0), x))
+```
+
+Example 4-5. Simple filter on second element in Scala
+```
+pairs.filter{case (key, value) => value.length < 20}
+```
+
+Sometimes working with pairs can be awkward if we want to access only the value
+part of our pair RDD. Since this is a common pattern, Spark provides the mapVal
+ues(func) function, which is the same as map{case (x, y): (x, func(y))}. We
+will use this function in many of our examples.
+
+reduceByKey() is quite similar to reduce(); both take a function and use it to combine
+values. it returns a new RDD
+consisting of each key and the reduced value for that key.
+
+foldByKey() is quite similar to fold(); both use a zero value of the same type of the
+data in our RDD and combination function.
+
+Example 4-8. Per-key average with reduceByKey() and mapValues() in Scala
+```
+rdd.mapValues(x => (x, 1)).reduceByKey((x, y) => (x._1 + y._1, x._2 + y._2))
+```
+
+so, if we have two keys of 'panda' with val1 = (0, 1) and val2 = (1, 1), this becomes:
+```
+x._1 = 0 and y._1 = 1
+x._2 = 1 and x._2 = 1
+```
+
+The result is a tuple {1, 2}; if there were more keys with the value 'panda' then this new tuple would become x1, y1 and the next tuple for key 'panda' would become x2, y2.
+What happens, I think, is that _reduceByKey_ takes the first two entries off the RDD that match the key.  Then it creates a tuple for each of the two x and y values; think of (x1, y1) and (x2, y2) stacked atop one another and a vertical oval drawn through each of the x and y elements to create a new tuple with just x or y values.
+
+# Word count
+Example 4-10. Word count in Scala
+```
+val input = sc.textFile("s3://...")
+val words = input.flatMap(x => x.split(" "))
+val result = words.map(x => (x, 1)).reduceByKey((x, y) => x + y)
+```
+
+combineByKey() is the most general of the per-key aggregation functions. Most of the
+other per-key combiners are implemented using it. Like aggregate(), combineBy
+Key() allows the user to return values that are not the same type as our input data.
+
+
+Example 4-13. Per-key average using combineByKey() in Scala
+```
+val result = input.combineByKey(
+(v) => (v, 1),
+(acc: (Int, Int), v) => (acc._1 + v, acc._2 + 1),
+(acc1: (Int, Int), acc2: (Int, Int)) => (acc1._1 + acc2._1, acc1._2 + acc2._2)
+).map{ case (key, value) => (key, value._1 / value._2.toFloat) }
+result.collectAsMap().foreach(println(_))
+```
