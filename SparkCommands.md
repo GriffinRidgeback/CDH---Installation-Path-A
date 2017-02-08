@@ -304,3 +304,65 @@ I had same problem and it was solved by adding a remote catalog: http://repo1.ma
         <scope>test</scope>
     </dependency>
 </pre> 
+
+# Running Spark in the pseudo-cluster
+Follow the instructions on the Hadoop page for setting up the pseudo cluster - they work!
+In the spark shell, to access data on the "cluster", type this:
+```
+val configFile = sc.textFile("hdfs://localhost:9000/user/kevin.delia/input/yarn-site.xml")
+```
+
+# Running Yarn jobs in pseudo-distributed mode
+Running on a Mac with hadoop 2.7.3 and Spark 2.1.0, running yarn jar jobs results in the following error:
+```
+/bin/bash: /bin/java: No such file or directory
+```
+
+This [link[(http://stackoverflow.com/questions/33968422/bin-bash-bin-java-no-such-file-or-directory) provides the solution but simply put, it is this:
+```
+This answer is applicable for Hadoop version 2.6.0 and earlier. Disabling SIP and creating a symbolic link does provide a workaround. A better solution is to fix the hadoop-config.sh so it picks up your JAVA_HOME correctly
+
+In HADOOP_HOME/libexec/hadoop-config.sh look for the if condition below # Attempt to set JAVA_HOME if it is not set
+
+Remove extra parentheses in the export JAVA_HOME lines as below. Change this
+
+   if [ -x /usr/libexec/java_home ]; then
+       export JAVA_HOME=($(/usr/libexec/java_home))
+   else
+       export JAVA_HOME=(/Library/Java/Home)
+   fi
+to
+
+   if [ -x /usr/libexec/java_home ]; then
+       export JAVA_HOME=$(/usr/libexec/java_home)
+   else
+       export JAVA_HOME=/Library/Java/Home
+   fi
+Restart yarn after you have made this change. More detailed info can be found here https://issues.apache.org/jira/browse/HADOOP-8717
+```
+
+Then this will work:
+```
+yarn jar /Users/kevin.delia/hadoop-2.7.3/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+```
+
+# Scala/Spark notes
+Spark 2.1.0 is built with Scala 2.11.8 so the maven dependencies have to match up.  Scala has versions more recent than 2.11.8 but those were not used to build Spark and are usuable only for Scala, not Spark, development.
+
+# Running Spark in a cluster
+1.start-master.sh
+```
+start-master.sh 
+starting org.apache.spark.deploy.master.Master, logging to /Users/kevin.delia/spark-2.1.0-bin-hadoop2.7/logs/spark-kevin.delia-org.apache.spark.deploy.master.Master-1-kevindelia-MBP.local.out
+```
+2. start a worker
+```
+./spark-class org.apache.spark.deploy.worker.Worker spark://kevindelia-MBP.local:7077
+```
+The worker should appear in the Spark Master UI (localhost:8080)
+
+3. Connect the REPL
+```
+spark-shell --master spark://kevindelia-MBP.local:7077
+```
+Spark will create the __derby.log__ and __metastore_db__ in the directory from which you launch the command; good idea to run from $SPARK_HOME
