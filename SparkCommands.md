@@ -366,3 +366,18 @@ The worker should appear in the Spark Master UI (localhost:8080)
 spark-shell --master spark://kevindelia-MBP.local:7077
 ```
 Spark will create the __derby.log__ and __metastore_db__ in the directory from which you launch the command; good idea to run from $SPARK_HOME
+
+# How to read the Maven dependency snippets
+```
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_2.11</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-sql_2.11</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+```
+The __artifactId__ contains the version os _Scala_ that was used to compile Spark; in this case, it is the 2.11.x level of the Scala compiler, which is not necessarily the latest but the one that needs to be in the build path of your project in order to have no errors from this aspect of the configuration.  The version of the artifact is the version of Spark that you are using.
